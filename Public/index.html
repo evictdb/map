@@ -20,7 +20,15 @@
       integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
       crossorigin=""
     ></script>
-
+    <!-- Load Esri Leaflet from CDN -->
+    <script
+      src="https://unpkg.com/esri-leaflet@2.5.3/dist/esri-leaflet.js"
+      integrity="sha512-K0Vddb4QdnVOAuPJBHkgrua+/A9Moyv8AQEWi0xndQ+fqbRfAFd47z4A9u1AW/spLO0gEaiE1z98PK1gl5mC5Q=="
+      crossorigin=""
+    ></script>
+    <!-- Load Esri Leaflet Renderers -->
+    <!-- This will hook into Esri Leaflet to get renderer info when adding a feature layer -->
+    <script src="https://unpkg.com/esri-leaflet-renderers@2.0.6"></script>
     <style>
       body {
         margin: 0;
@@ -44,14 +52,58 @@
 
     <script>
       var map = L.map("map").setView([29.63, -82.37], 14);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(map);
+      // L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      //   maxZoom: 19,
+      //   attribution:
+      //     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      // }).addTo(map);
+
+      L.esri.basemapLayer("Streets").addTo(map);
+
+      // L.esri
+      //   .featureLayer({
+      //     url: "https://services.arcgis.com/cNo3jpluyt69V8Ek/arcgis/rest/services/PublicParcel/FeatureServer/0",
+      //     maxZoom: 13,
+      //     minZoom: 10,
+      //     precision: 3,
+      //     simplifyFactor: 0.2,
+      //   })
+      //   .addTo(map);
+      // L.esri
+      //   .featureLayer({
+      //     url: "https://services.arcgis.com/cNo3jpluyt69V8Ek/arcgis/rest/services/PublicParcel/FeatureServer/0",
+      //     maxZoom: 16,
+      //     minZoom: 14,
+      //     precision: 4,
+      //     simplifyFactor: 0.2,
+      //   })
+      //   .addTo(map);
+      // L.esri
+      //   .featureLayer({
+      //     url: "https://services.arcgis.com/cNo3jpluyt69V8Ek/arcgis/rest/services/PublicParcel/FeatureServer/0",
+      //     maxZoom: 18,
+      //     minZoom: 17,
+      //     precision: 5,
+      //     simplifyFactor: 0.2,
+      //   })
+      //   .addTo(map);
+      // L.esri
+      //   .featureLayer({
+      //     url: "https://services.arcgis.com/cNo3jpluyt69V8Ek/arcgis/rest/services/PublicParcel/FeatureServer/0",
+      //     maxZoom: 19,
+      //     minZoom: 19,
+      //     precision: 7,
+      //     simplifyFactor: 0.1,
+      //   })
+      //   .addTo(map);ß
+
+      L.esri
+        .featureLayer({
+          url: "https://services.arcgis.com/cNo3jpluyt69V8Ek/arcgis/rest/services/PublicParcel/FeatureServer/0",
+        })
+        .addTo(map);
 
       var heat = L.heatLayer(addressPoints).addTo(map);
-
     </script>
   </body>
 </html>
