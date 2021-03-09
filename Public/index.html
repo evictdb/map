@@ -2,24 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Points as a heatmap</title>
+    <title>Evictions</title>
     <meta
       name="viewport"
       content="initial-scale=1,maximum-scale=1,user-scalable=no"
     />
-
-    <!-- Load Leaflet from CDN -->
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-      integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
-      crossorigin=""
-    />
-    <script
-      src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
-      integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
-      crossorigin=""
-    ></script>
 
     <style>
       body {
@@ -30,28 +17,160 @@
         position: absolute;
         top: 0;
         bottom: 0;
-        right: 0;
-        left: 0;
+        width: 100%;
       }
     </style>
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.skypack.dev/maplibre-gl/dist/maplibre-gl.css"
+    />
   </head>
   <body>
-    <!-- Include Leaflet.heat from CDN -->
-    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-    <script src="./address-points.js"></script>
-
     <div id="map"></div>
 
-    <script>
-      var map = L.map("map").setView([29.63, -82.37], 14);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(map);
+    <script type="module">
+      import {
+        Map,
+        GeolocateControl,
+      } from "https://cdn.skypack.dev/maplibre-gl";
 
-      var heat = L.heatLayer(addressPoints).addTo(map);
+      const map = new Map({
+        container: "map", // the id of the div element
+        zoom: 14, // starting zoom
+        center: [-82.37, 29.63], // starting location [longitude, latitude]
+        style: {
+          version: 8,
+          sources: {
+            "raster-tiles": {
+              type: "raster",
+              tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+              tileSize: 256,
+              attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            },
+          },
+          layers: [
+            {
+              id: "simple-tiles",
+              type: "raster",
+              source: "raster-tiles",
+              minzoom: 0,
+              maxzoom: 22,
+            },
+          ],
+        },
+      });
 
+      map.on("load", function () {
+        map.addSource("eviction-cases", {
+          type: "geojson",
+          data: "eviction-cases.geojson",
+        });
+        map.addLayer({
+          id: "evictions-heat",
+          type: "heatmap",
+          source: "eviction-cases",
+          maxzoom: 15,
+          paint: {
+            // increase weight as diameter breast height increases
+            "heatmap-weight": {
+              property: "dbh",
+              type: "exponential",
+              stops: [
+                [1, 0],
+                [62, 1],
+              ],
+            },
+            // increase intensity as zoom level increases
+            "heatmap-intensity": {
+              stops: [
+                [11, 1],
+                [15, 3],
+              ],
+            },
+            // assign color values be applied to points depending on their density
+            "heatmap-color": [
+              "interpolate",
+              ["linear"],
+              ["heatmap-density"],
+              0,
+              "rgba(236,222,239,0)",
+              0.2,
+              "rgb(208,209,230)",
+              0.4,
+              "rgb(166,189,219)",
+              0.6,
+              "rgb(103,169,207)",
+              0.8,
+              "rgb(28,144,153)",
+            ],
+            // increase radius as zoom increases
+            "heatmap-radius": {
+              stops: [
+                [11, 15],
+                [15, 20],
+              ],
+            },
+            // decrease opacity to transition into the circle layer
+            "heatmap-opacity": {
+              default: 1,
+              stops: [
+                [14, 1],
+                [15, 0],
+              ],
+            },
+          },
+        });
+        map.addLayer({
+          id: "evictions-point",
+          type: "circle",
+          source: "eviction-cases",
+          minzoom: 14,
+          paint: {
+            // increase the radius of the circle as the zoom level and dbh value increases
+            "circle-radius": {
+              property: "dbh",
+              type: "exponential",
+              stops: [
+                [{ zoom: 15, value: 1 }, 5],
+                [{ zoom: 15, value: 62 }, 10],
+                [{ zoom: 22, value: 1 }, 20],
+                [{ zoom: 22, value: 62 }, 50],
+              ],
+            },
+            "circle-color": {
+              property: "dbh",
+              type: "exponential",
+              stops: [
+                [0, "rgba(236,222,239,0)"],
+                [10, "rgb(236,222,239)"],
+                [20, "rgb(208,209,230)"],
+                [30, "rgb(166,189,219)"],
+                [40, "rgb(103,169,207)"],
+                [50, "rgb(28,144,153)"],
+                [60, "rgb(1,108,89)"],
+              ],
+            },
+            "circle-stroke-color": "white",
+            "circle-stroke-width": 1,
+            "circle-opacity": {
+              stops: [
+                [14, 0],
+                [15, 1],
+              ],
+            },
+          },
+        });
+      });
+
+      map.addControl(
+        new GeolocateControl({
+          positionOptions: {
+            enableHighAccuracy: true,
+          },
+        })
+      );
     </script>
   </body>
 </html>
