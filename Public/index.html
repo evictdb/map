@@ -33,6 +33,7 @@
       import {
         Map,
         GeolocateControl,
+        Popup,
       } from "https://cdn.skypack.dev/maplibre-gl";
 
       const map = new Map({
@@ -56,7 +57,7 @@
               type: "raster",
               source: "raster-tiles",
               minzoom: 0,
-              maxzoom: 22,
+              maxzoom: 20,
             },
           ],
         },
@@ -67,6 +68,7 @@
           type: "geojson",
           data: "eviction-cases.geojson",
         });
+
         map.addLayer({
           id: "evictions-heat",
           type: "heatmap",
@@ -162,6 +164,23 @@
             },
           },
         });
+        const bounds = map.getBounds();
+        const center = map.getCenter();
+        console.log(bounds, center);
+        const box = [bounds._sw.lng + bounds._sw.lng - center.lng, bounds._sw.lat + bounds._sw.lat - center.lat, bounds._ne.lng + bounds._ne.lng - center.lng, bounds._ne.lat + bounds._ne.lat - center.lat];
+        const dataUrl = `https://services.arcgis.com/cNo3jpluyt69V8Ek/ArcGIS/rest/services/PublicParcel/FeatureServer/0/query?f=pgeojson&geometryType=esriGeometryEnvelope&geometry=${box.join(',')}`;
+        map.addSource("acpa-parcels", {
+          type: "geojson",
+          data: dataUrl,
+        });
+        map.addLayer({
+          id: "parcels",
+          type: "line",
+          source: "acpa-parcels",
+          paint: {
+            "line-color": "hsla(239,80%,60%,0.75)",
+          },
+        });
       });
 
       map.addControl(
@@ -171,6 +190,20 @@
           },
         })
       );
+
+      map.on("click", "evictions-point", function (e) {
+        new Popup()
+          .setLngLat(e.features[0].geometry.coordinates)
+          .setHTML(
+            `<ul>${["Case Number", "Filed", "Address"]
+              .map(
+                (field) =>
+                  `<li>${field}: <b>${e.features[0].properties[field]}</b></li>`
+              )
+              .join("")}</ul>`
+          )
+          .addTo(map);
+      });
     </script>
   </body>
 </html>
